@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo Arena - Juega y Gana en Bs y Dólares</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Styles & Animations -->
+    <style>
+        /* SafeArea para dispositivos móviles modernos (iPhone, etc) */
+        .pb-safe {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+        }
+
+        .pt-safe {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        /* Animaciones fluidas */
+        .fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .zoom-in {
+            animation: zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast-slide {
+            animation: toastSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toastSlide {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Ocultar scrollbar pero permitir scroll */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Prevenir zoom en inputs en iOS */
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"] {
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans h-screen overflow-hidden flex flex-col selection:bg-indigo-200">
+
+    <div id="toast-container"
+        class="fixed top-4 left-0 right-0 z-[9999] flex flex-col items-center gap-2 pointer-events-none px-4"></div>
+
+    <div id="loading-screen" class="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center z-[100]">
+        <div class="relative w-20 h-20 mb-6">
+            <div class="absolute inset-0 bg-indigo-200 rounded-full animate-ping opacity-75"></div>
+            <div
+                class="relative bg-indigo-600 w-full h-full rounded-2xl shadow-xl flex items-center justify-center transform rotate-12 animate-pulse">
+                <i data-lucide="swords" class="text-white w-10 h-10"></i>
+            </div>
+        </div>
+        <div class="text-slate-800 font-black text-xl tracking-tight">LUDO<span class="text-indigo-600">ARENA</span>
+        </div>
+        <div class="text-slate-500 font-bold text-sm tracking-widest uppercase mt-2 animate-pulse">Conectando...</div>
+    </div>
+
+    <div id="auth-container"
+        class="hidden fixed inset-0 bg-white z-[90] flex flex-col items-center justify-center p-6 overflow-y-auto pt-safe">
+        <div class="w-full max-w-sm">
+            <div class="text-center mb-10">
+                <div
+                    class="bg-indigo-600 w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-xl shadow-indigo-200 mb-6 transform -rotate-6">
+                    <i data-lucide="swords" class="text-white w-10 h-10"></i>
+                </div>
+                <h1 class="text-4xl font-black tracking-tight text-slate-900">LUDO<span
+                        class="text-indigo-600">ARENA</span></h1>
+                <p class="text-slate-500 font-medium text-sm mt-2">Plataforma oficial de apuestas</p>
+            </div>
+
+            <!-- Formularios Dinámicos -->
+            <div id="login-view" class="fade-in space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Correo
+                        Electrónico</label>
+                    <div class="relative">
+                        <i data-lucide="mail"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                        <input type="email" id="login-email"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                            placeholder="tu@correo.com">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide">Contraseña</label>
+                        <button onclick="window.resetPassword()"
+                            class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">¿Olvidaste
+                            tu clave?</button>
+                    </div>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                        <input type="password" id="login-pass"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                            placeholder="••••••••">
+                    </div>
+                </div>
+                <button onclick="window.login()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2 mt-2">
+                    Entrar a la Arena <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+                <div class="text-center pt-4 border-t border-slate-100">
+                    <button onclick="window.toggleAuthView('register')"
+                        class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">¿No tienes
+                        cuenta? <span class="text-indigo-600">Regístrate gratis</span></button>
+                </div>
+            </div>
+
+            <div id="register-view" class="hidden fade-in space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Apodo
+                        (Público)</label>
+                    <div class="relative">
+                        <i data-lucide="user"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                        <input type="text" id="reg-username"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                            placeholder="Ej. ReyLudo99">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Correo
+                        Electrónico</label>
+                    <div class="relative">
+                        <i data-lucide="mail"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                        <input type="email" id="reg-email"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-slate-900 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
+                            placeholder="tu@correo.com">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Contraseña</label>
+                        <input type="password" id="reg-pass"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 px-4 text-slate-900 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
+                            placeholder="6+ caract.">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Confirmar</label>
+                        <input type="password" id="reg-pass2"
+                            class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 px-4 text-slate-900 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
+                            placeholder="Repetir">
+                    </div>
+                </div>
+                <button onclick="window.register()"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
+                    Crear Cuenta <i data-lucide="user-plus" class="w-5 h-5"></i>
+                </button>
+                <div class="text-center pt-4 border-t border-slate-100">
+                    <button onclick="window.toggleAuthView('login')"
+                        class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">Ya tengo
+                        cuenta. <span class="text-indigo-600">Iniciar Sesión</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden flex-1 overflow-y-auto bg-slate-50">
+
+        <!-- Header Fijo Superior -->
+        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-40 shadow-sm flex flex-col gap-3 pt-safe">
+            <div class="max-w-3xl mx-auto w-full flex flex-col gap-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-indigo-600 p-1.5 rounded-lg shadow-sm">
+                            <i data-lucide="swords" class="text-white w-5 h-5"></i>
+                        </div>
+                        <h1 class="text-xl font-black tracking-tight text-slate-900 leading-none">LUDO<br><span
+                                class="text-indigo-600">ARENA</span></h1>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Billetera -->
+                        <div class="flex flex-col items-end mr-2">
+                            <span
+                                class="text-[10px] text-slate-500 font-bold mb-0.5 tracking-wide uppercase">Billetera</span>
+                            <button onclick="window.openWallet()"
+                                class="flex items-center gap-1.5 text-emerald-700 font-black bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-sm active:scale-95">
+                                <i data-lucide="wallet" class="w-4 h-4"></i>
+                                <span id="user-balance" class="text-sm">0.0 LC</span>
+                            </button>
+                        </div>
+
+                        <!-- Acciones Rapidas -->
+                        <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                            <button onclick="window.openProfile()"
+                                class="text-slate-500 hover:text-indigo-600 bg-white p-2 rounded-lg shadow-sm transition-all"
+                                title="Mi Perfil">
+                                <i data-lucide="user-cog" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.openRules()"
+                                class="text-slate-500 hover:text-indigo-600 p-2 rounded-lg transition-all"
+                                title="Reglas">
+                                <i data-lucide="book-open" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.logout()"
+                                class="text-slate-500 hover:text-rose-500 p-2 rounded-lg transition-all" title="Salir">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasa BCV Oficial -->
+                <div class="bg-slate-900 rounded-xl p-2.5 px-4 flex items-center justify-between shadow-md">
+                    <div class="flex items-center gap-2 text-xs text-slate-300 font-medium">
+                        <i data-lucide="landmark" class="text-amber-400 w-4 h-4"></i>
+                        <span>Tasa BCV Oficial:</span>
+                    </div>
+                    <div id="bcv-rate"
+                        class="font-mono text-sm font-black text-white bg-white/10 px-2 py-0.5 rounded border border-white/20 tracking-wide">
+                        Actualizando...
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Área de Contenido Principal -->
+        <main class="max-w-3xl mx-auto w-full p-4 pb-safe" id="main-content">
+            <!-- El contenido dinámico de React-style entra aquí -->
+        </main>
+    </div>
+
+
+    <!-- Modal: Billetera -->
+    <div id="wallet-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-end sm:items-center justify-center fade-in">
+        <div
+            class="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-sm shadow-2xl slide-up sm:m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="wallet"
+                        class="text-emerald-500"></i> Mi Billetera</h3>
+                <button onclick="window.closeModal('wallet-modal')"
+                    class="text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="bg-slate-900 text-white rounded-2xl p-5 mb-6 shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 opacity-10"><i data-lucide="coins" class="w-24 h-24"></i></div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Saldo Disponible</p>
+                <p class="text-4xl font-black text-emerald-400" id="wallet-balance-big">0.0 LC</p>
+                <p class="text-xs text-slate-300 mt-2 font-mono">1 LC = 1 USD (Se paga a tasa BCV)</p>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1"><i
+                            data-lucide="arrow-down-to-line" class="w-4 h-4"></i> Para Recargar (Pagar)</p>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500">Pago Móvil:</span>
+                            <span class="font-bold text-slate-800">Banesco (0134)</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500">Teléfono:</span>
+                            <span class="font-bold text-slate-800 font-mono">0424-135-3496</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-500">Cédula:</span>
+                            <span class="font-bold text-slate-800 font-mono">V20.297.129</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm border-t border-slate-200 pt-3 mt-1">
+                            <span class="text-slate-500 flex items-center gap-1"><i data-lucide="bitcoin"
+                                    class="w-4 h-4"></i> Binance Pay:</span>
+                            <span class="font-bold text-slate-800 text-xs">519506837</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="window.reportPayment('recarga')"
+                        class="col-span-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-xl shadow-md active:scale-95 transition-transform flex justify-center items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i> Reportar Recarga
+                    </button>
+                    <button onclick="window.reportPayment('retiro')"
+                        class="col-span-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl active:scale-95 transition-transform border border-slate-200">
+                        Solicitar Retiro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Reglas -->
+    <div id="rules-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl zoom-in max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
+                <h3 class="text-xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="shield-check"
+                        class="text-indigo-600"></i> Reglas de la Arena</h3>
+                <button onclick="window.closeModal('rules-modal')"
+                    class="text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 text-sm text-slate-600">
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                    <h4 class="font-black text-indigo-900 mb-1 text-xs uppercase tracking-wide flex items-center gap-1">
+                        <i data-lucide="info" class="w-4 h-4"></i> 1. ¿Cómo funciona?
+                    </h4>
+                    <p>Acuerdas una partida aquí, copias el ID y juegan en la App de **Ludo Club** o **Parchis**. El
+                        ganador viene aquí y reporta su victoria para cobrar.</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="font-black text-slate-800 mb-1 text-xs uppercase tracking-wide flex items-center gap-1">
+                        <i data-lucide="percent" class="w-4 h-4"></i> 2. Comisión (House Edge)
+                    </h4>
+                    <p>Ludo Arena retiene el **10%** del pozo total como comisión de plataforma. Ej: Si apuestan 5 c/u
+                        (Pozo 10), el ganador recibe 9 LC.</p>
+                </div>
+                <div class="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                    <h4 class="font-black text-rose-800 mb-1 text-xs uppercase tracking-wide flex items-center gap-1"><i
+                            data-lucide="alert-triangle" class="w-4 h-4"></i> 3. Desconexiones y Trampas</h4>
+                    <p class="text-rose-700">Desconectarse o salir del Ludo = **Partida Perdida**. Si ganas, SIEMPRE
+                        toma captura de pantalla de la victoria para cobrar.</p>
+                </div>
+            </div>
+            <button onclick="window.closeModal('rules-modal')"
+                class="w-full bg-slate-900 text-white font-black py-4 mt-6 rounded-xl active:scale-95 transition-transform shadow-lg">¡Entendido,
+                a jugar!</button>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Perfil -->
+    <div id="profile-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl zoom-in">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
+                <h3 class="text-xl font-black text-slate-900 flex items-center gap-2"><i data-lucide="user-cog"
+                        class="text-indigo-600"></i> Mi Perfil</h3>
+                <button onclick="window.closeModal('profile-modal')"
+                    class="text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-full"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Elegir
+                        Avatar</label>
+                    <div class="flex flex-wrap gap-3 justify-center bg-slate-50 p-3 rounded-2xl border border-slate-100"
+                        id="avatar-selector">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Cambiar
+                        Apodo</label>
+                    <input type="text" id="edit-username"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-900 font-bold focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <button onclick="window.saveProfile()"
+                class="w-full bg-indigo-600 text-white font-black py-3.5 mt-6 rounded-xl active:scale-95 transition-transform shadow-md">Guardar
+                Cambios</button>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Reto 2P -->
+    <div id="create-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 fade-in">
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 w-full max-w-sm shadow-2xl zoom-in">
+            <h3 class="text-2xl font-black mb-2 text-slate-900">Crear Reto (1 vs 1)</h3>
+            <p class="text-sm text-slate-500 mb-6 leading-relaxed">Define el monto a apostar en LC. El sistema
+                descontará el saldo de tu billetera.</p>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Monto
+                    (LudoCoins)</label>
+                <div class="relative">
+                    <i data-lucide="wallet" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-6 h-6"></i>
+                    <input type="number" id="bet-amount-input" value="10"
+                        class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-2xl font-black text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all"
+                        min="1" oninput="window.updateConversion('modal-conversion', 'modal-bs-amount', this.value)">
+                </div>
+                <div id="modal-conversion"
+                    class="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex justify-between items-center hidden">
+                    <span class="text-xs text-emerald-700 font-bold">Equivale a:</span>
+                    <span id="modal-bs-amount" class="text-sm font-black text-emerald-700 font-mono">Bs. ---</span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.closeModal('create-modal')"
+                    class="flex-1 bg-slate-100 text-slate-700 py-4 rounded-2xl font-bold active:scale-95 transition-all">Cancelar</button>
+                <button onclick="window.handleCreateGame()"
+                    class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-200 active:scale-95 transition-all">Crear
+                    y Pagar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Mesa VIP 4P (Solo Admin) -->
+    <div id="create-4p-modal"
+        class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[80] flex items-center justify-center p-4 fade-in">
+        <div
+            class="bg-slate-900 border-2 border-amber-500/50 rounded-3xl p-6 w-full max-w-sm shadow-2xl shadow-amber-900/50 zoom-in relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-10"><i data-lucide="crown"
+                    class="w-32 h-32 text-amber-500"></i></div>
+            <h3 class="text-2xl font-black mb-2 text-white flex items-center gap-2 relative z-10"><i data-lucide="crown"
+                    class="text-amber-500"></i> Mesa VIP 4P</h3>
+            <p class="text-sm text-slate-400 mb-6 font-medium relative z-10">Crea una mesa de alto valor. Se inicia sola
+                al entrar 4 jugadores.</p>
+
+            <div class="mb-6 relative z-10">
+                <label class="block text-xs font-bold text-amber-500/80 mb-2 uppercase tracking-wider">Costo de Entrada
+                    (LC)</label>
+                <div class="relative">
+                    <i data-lucide="ticket" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-6 h-6"></i>
+                    <input type="number" id="bet-4p-input" value="20"
+                        class="w-full bg-slate-800 border-2 border-slate-700 text-white rounded-2xl py-4 pl-12 pr-4 text-2xl font-black focus:outline-none focus:border-amber-500 transition-all"
+                        min="1"
+                        oninput="window.updateConversion('modal-4p-conversion', 'modal-4p-bs-amount', this.value)">
+                </div>
+                <div id="modal-4p-conversion"
+                    class="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex justify-between items-center hidden">
+                    <span class="text-xs text-amber-500 font-bold">Equivale a:</span>
+                    <span id="modal-4p-bs-amount" class="text-sm font-black text-amber-400 font-mono">Bs. ---</span>
+                </div>
+            </div>
+            <div class="flex gap-3 relative z-10">
+                <button onclick="window.closeModal('create-4p-modal')"
+                    class="flex-1 bg-slate-800 text-slate-300 py-4 rounded-2xl font-bold active:scale-95 transition-all">Cancelar</button>
+                <button onclick="window.handleCreate4PGame()"
+                    class="flex-[2] bg-amber-500 text-slate-900 py-4 rounded-2xl font-black shadow-lg shadow-amber-500/20 active:scale-95 transition-all">Abrir
+                    Mesa VIP</button>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav"
+        class="hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 px-2 py-2 z-50 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+        <div class="max-w-md mx-auto flex justify-around items-center" id="nav-buttons">
+            <!-- Inyectado por JS -->
+        </div>
+    </nav>
+
+    <!-- Botón Flotante WhatsApp -->
+    <button id="floating-wa"
+        class="hidden fixed bottom-24 right-4 z-40 bg-emerald-500 text-white p-3.5 rounded-full shadow-lg shadow-emerald-500/40 hover:bg-emerald-600 transition-transform active:scale-90 flex items-center justify-center animate-bounce"
+        onclick="window.reportPayment('soporte')">
+        <i data-lucide="message-circle" class="w-7 h-7"></i>
+    </button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // CONFIGURACIÓN DE TU NEGOCIO
+        // ==========================================
+        const ADMIN_EMAIL = "llemus1217@gmail.com"; // CAMBIA ESTO POR TU CORREO PARA SER ADMIN
+        const ADMIN_PHONE = "584241353496"; // CAMBIA ESTO POR TU WHATSAPP (Sin el '+')
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKh10jPI6EVw4kvAMpiZZlxs2TwVwxIt8",
+            authDomain: "ludoarena-app-9d960.firebaseapp.com",
+            projectId: "ludoarena-app-9d960",
+            storageBucket: "ludoarena-app-9d960.firebasestorage.app",
+            messagingSenderId: "655838670390",
+            appId: "1:655838670390:web:6a01a6d16a0bdee446b297"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Rutas Limpias (Directo a tu Firestore)
+        const getPublicCollection = (collectionName) => collection(db, collectionName);
+        const getPublicDoc = (collectionName, docId) => doc(db, collectionName, docId);
+
+        // Estado Global
+        const state = {
+            user: null,
+            isAdmin: false,
+            profile: { balance: 0, wins: 0, earnings: 0, username: '', avatar: 'user' },
+            games: [],
+            users: {},
+            activeTab: 'lobby',
+            exchangeRate: null,
+            rateLoading: true
+        };
+
+        const AVATARS = ['user', 'ghost', 'skull', 'cat', 'dog', 'sword', 'gem', 'flame', 'zap', 'crown'];
+
+        // ==========================================
+        // SISTEMA DE NOTIFICACIONES (TOASTS) & PORTAPAPELES
+        // ==========================================
+        window.showToast = (msg, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+            toast.className = `flex items-center gap-2 px-4 py-3 rounded-2xl shadow-lg text-sm font-bold text-white toast-slide ${isError ? 'bg-rose-500' : 'bg-emerald-500'}`;
+            toast.innerHTML = `<i data-lucide="${isError ? 'alert-triangle' : 'check-circle-2'}" class="w-5 h-5"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons({ name: isError ? 'alert-triangle' : 'check-circle-2', attrs: { class: "w-5 h-5" } });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        window.copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                window.showToast(`ID ${text} copiado! pégalo en el Ludo.`, 'success');
+            }).catch(err => {
+                // Fallback para móviles viejos
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    window.showToast(`ID copiado al portapapeles.`, 'success');
+                } catch (ex) {
+                    window.showToast('Error al copiar ID', 'error');
+                }
+                document.body.removeChild(textArea);
+            });
+        };
+
+        // ==========================================
+        // UTILIDADES Y FORMATOS
+        // ==========================================
+        const formatId = (userId) => {
+            if (!userId) return 'Jugador';
+            if (userId === state.user?.uid && state.profile?.username) return state.profile.username;
+            const u = state.users[userId];
+            if (u && u.username) return u.username;
+            if (u && u.email) return u.email.split('@')[0].substring(0, 10);
+            return userId.substring(0, 5) + '...';
+        };
+
+        const formatAvatar = (userId) => {
+            if (userId === state.user?.uid && state.profile?.avatar) return state.profile.avatar;
+            const u = state.users[userId];
+            return (u && u.avatar) ? u.avatar : 'user';
+        };
+
+        const formatBs = (amountInUSD) => state.exchangeRate ? (amountInUSD * state.exchangeRate).toFixed(2) : "---";
+
+        async function fetchExchangeRate() {
+            try {
+                const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                const data = await response.json();
+                if (data && data.promedio) {
+                    state.exchangeRate = data.promedio;
+                    document.getElementById('bcv-rate').innerText = `1 LC = Bs. ${data.promedio.toFixed(2)}`;
+                }
+            } catch (error) {
+                document.getElementById('bcv-rate').innerText = 'No disp.';
+            } finally {
+                state.rateLoading = false;
+            }
+        }
+
+        // ==========================================
+        // AUTENTICACIÓN
+        // ==========================================
+        window.toggleAuthView = (view) => {
+            const login = document.getElementById('login-view');
+            const reg = document.getElementById('register-view');
+            if (view === 'register') { login.classList.add('hidden'); reg.classList.remove('hidden'); }
+            else { reg.classList.add('hidden'); login.classList.remove('hidden'); }
+        };
+
+        window.register = async () => {
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const pass2 = document.getElementById('reg-pass2').value;
+
+            if (!username || username.length < 3) return window.showToast("El apodo debe tener al menos 3 letras.", "error");
+            if (pass !== pass2) return window.showToast("Las contraseñas no coinciden.", "error");
+            if (pass.length < 6) return window.showToast("La contraseña debe tener 6+ caracteres.", "error");
+
+            try {
+                document.getElementById('loading-screen').classList.remove('hidden');
+                const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                // CREAR USUARIO CON BALANCE CERO
+                await setDoc(getPublicDoc('profiles', userCred.user.uid), {
+                    balance: 0, wins: 0, earnings: 0, email: email, username: username, avatar: 'user', joinedAt: Date.now()
+                });
+                await sendEmailVerification(userCred.user);
+                await signOut(auth);
+
+                document.getElementById('loading-screen').classList.add('hidden');
+                window.toggleAuthView('login');
+                window.showToast("¡Cuenta creada! Verifica tu correo y luego inicia sesión.", "success");
+            } catch (error) {
+                document.getElementById('loading-screen').classList.add('hidden');
+                window.showToast(error.code === 'auth/email-already-in-use' ? 'El correo ya está registrado.' : 'Error al crear la cuenta.', "error");
+            }
+        };
+
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            if (!email || !pass) return window.showToast("Completa todos los campos.", "error");
+
+            try {
+                document.getElementById('loading-screen').classList.remove('hidden');
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                document.getElementById('loading-screen').classList.add('hidden');
+                window.showToast("Correo o contraseña incorrectos.", "error");
+            }
+        };
+
+        window.resetPassword = async () => {
+            const email = document.getElementById('login-email').value;
+            if (!email) return window.showToast("Escribe tu correo arriba para recuperar la clave.", "error");
+            try {
+                await sendPasswordResetEmail(auth, email);
+                window.showToast("Te enviamos un enlace de recuperación a tu correo.", "success");
+            } catch (error) {
+                window.showToast("Error al enviar recuperación.", "error");
+            }
+        };
+
+        window.logout = () => signOut(auth);
+
+        // ==========================================
+        // LISTENERS DE FIREBASE
+        // ==========================================
+        async function initializeProfile(uid, email) {
+            const profileRef = getPublicDoc('profiles', uid);
+            const snap = await getDoc(profileRef);
+            if (!snap.exists()) {
+                const newProfile = { balance: 0, wins: 0, earnings: 0, email: email, username: email.split('@')[0], avatar: 'user', joinedAt: Date.now() };
+                await setDoc(profileRef, newProfile);
+                state.profile = newProfile;
+            } else {
+                state.profile = snap.data();
+            }
+            updateHeaderUI();
+        }
+
+        onAuthStateChanged(auth, async (currentUser) => {
+            const loading = document.getElementById('loading-screen');
+            const authCont = document.getElementById('auth-container');
+            const appCont = document.getElementById('app-container');
+            const botNav = document.getElementById('bottom-nav');
+            const floatWa = document.getElementById('floating-wa');
+
+            loading.classList.add('hidden');
+
+            if (currentUser) {
+                state.user = currentUser;
+                state.isAdmin = currentUser.email === ADMIN_EMAIL;
+
+                authCont.classList.add('hidden');
+                appCont.classList.remove('hidden');
+                appCont.classList.add('flex');
+                botNav.classList.remove('hidden');
+                floatWa.classList.remove('hidden');
+
+                await initializeProfile(currentUser.uid, currentUser.email);
+                setupListeners();
+                renderNav();
+                renderView();
+            } else {
+                state.user = null;
+                state.isAdmin = false;
+
+                appCont.classList.add('hidden');
+                appCont.classList.remove('flex');
+                botNav.classList.add('hidden');
+                floatWa.classList.add('hidden');
+                authCont.classList.remove('hidden'); // MUY IMPORTANTE: Evita pantalla blanca
+            }
+        });
+
+        function setupListeners() {
+            onSnapshot(getPublicCollection('games'), (snap) => {
+                state.games = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => b.createdAt - a.createdAt);
+                if (state.user) renderView();
+            });
+            onSnapshot(getPublicCollection('profiles'), (snap) => {
+                const users = {};
+                snap.docs.forEach(doc => {
+                    users[doc.id] = { id: doc.id, ...doc.data() };
+                    if (doc.id === state.user.uid) {
+                        state.profile = users[doc.id];
+                        updateHeaderUI();
+                    }
+                });
+                state.users = users;
+                if (state.user) renderView();
+            });
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('user-balance').innerText = `${(state.profile.balance || 0).toFixed(1)} LC`;
+            const bigBal = document.getElementById('wallet-balance-big');
+            if (bigBal) bigBal.innerText = `${(state.profile.balance || 0).toFixed(1)} LC`;
+        }
+
+        // ==========================================
+        // FUNCIONES DE INTERFAZ Y MODALES
+        // ==========================================
+        window.openModal = (id) => {
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'create-modal') window.updateConversion('modal-conversion', 'modal-bs-amount', 10);
+            if (id === 'create-4p-modal') window.updateConversion('modal-4p-conversion', 'modal-4p-bs-amount', 20);
+        };
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        window.openRules = () => window.openModal('rules-modal');
+        window.openWallet = () => window.openModal('wallet-modal');
+
+        window.openProfile = () => {
+            document.getElementById('edit-username').value = state.profile.username || '';
+            const selector = document.getElementById('avatar-selector');
+            selector.innerHTML = AVATARS.map(av => `
+                <button onclick="window.selectAvatar('${av}')" id="av-btn-${av}" class="p-3 rounded-xl border-2 transition-all ${state.profile.avatar === av ? 'border-indigo-600 bg-indigo-50 shadow-md transform scale-110' : 'border-transparent hover:bg-slate-200'}">
+                    <i data-lucide="${av}" class="w-6 h-6 ${state.profile.avatar === av ? 'text-indigo-600' : 'text-slate-500'}"></i>
+                </button>
+            `).join('');
+            lucide.createIcons();
+            window.openModal('profile-modal');
+        };
+
+        window.selectAvatar = (av) => {
+            state.profile.avatar = av;
+            window.openProfile(); // Re-renderiza para mostrar seleccionado
+        };
+
+        window.saveProfile = async () => {
+            const newName = document.getElementById('edit-username').value;
+            if (!newName || newName.length < 3) return window.showToast("El apodo debe tener 3 letras mínimo", "error");
+            try {
+                await updateDoc(getPublicDoc('profiles', state.user.uid), {
+                    username: newName, avatar: state.profile.avatar
+                });
+                window.closeModal('profile-modal');
+                window.showToast("Perfil actualizado", "success");
+            } catch (e) { window.showToast("Error al guardar", "error"); }
+        };
+
+        window.updateConversion = (divId, textId, val) => {
+            const div = document.getElementById(divId);
+            if (state.exchangeRate && val > 0) {
+                div.classList.remove('hidden');
+                document.getElementById(textId).innerText = `Bs. ${formatBs(val)}`;
+            } else {
+                div.classList.add('hidden');
+            }
+        };
+
+        window.reportPayment = (type) => {
+            let msg = "";
+            const email = state.user?.email || "Usuario";
+            if (type === 'recarga') msg = `Hola Admin, quiero recargar LudoCoins. Acabo de hacer un Pago Móvil / Binance. Mi correo de cuenta es: ${email}`;
+            else if (type === 'retiro') msg = `Hola Admin, quiero retirar mis ganancias de LudoCoins. Mi correo es: ${email}`;
+            else msg = `Hola Admin de Ludo Arena. Necesito ayuda con mi cuenta: ${email}`;
+            window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        // ==========================================
+        // LÓGICA DE PARTIDAS (CORE)
+        // ==========================================
+        window.handleCreateGame = async () => {
+            const amount = Number(document.getElementById('bet-amount-input').value);
+            if (amount < 1) return window.showToast("La apuesta mínima es 1 LC", "error");
+            if (state.profile.balance < amount) return window.showToast("Saldo insuficiente. Abre tu Billetera para recargar.", "error");
+            try {
+                await updateDoc(getPublicDoc('profiles', state.user.uid), { balance: state.profile.balance - amount });
+                const gameId = `game_${Date.now()}`;
+                await setDoc(getPublicDoc('games', gameId), {
+                    type: '2p', creatorId: state.user.uid, betAmount: amount, status: 'open', createdAt: Date.now(), challengerId: null, winnerId: null
+                });
+                window.closeModal('create-modal');
+                window.changeTab('my_games');
+                window.showToast("Reto creado, esperando rival.", "success");
+            } catch (e) { window.showToast("Error al crear reto", "error"); }
+        };
+
+        window.handleAcceptGame = async (gameId) => {
+            const game = state.games.find(g => g.id === gameId);
+            if (!game) return;
+            if (state.profile.balance < game.betAmount) return window.showToast("Saldo insuficiente para aceptar.", "error");
+            try {
+                await updateDoc(getPublicDoc('profiles', state.user.uid), { balance: state.profile.balance - game.betAmount });
+                await updateDoc(getPublicDoc('games', gameId), { challengerId: state.user.uid, status: 'active', startedAt: Date.now() });
+                window.changeTab('my_games');
+                window.showToast("¡Reto aceptado! A jugar.", "success");
+            } catch (e) { window.showToast("Error al aceptar", "error"); }
+        };
+
+        window.handleCreate4PGame = async () => {
+            const amount = Number(document.getElementById('bet-4p-input').value);
+            if (amount < 1) return;
+            try {
+                const gameId = `g4_${Date.now()}`;
+                await setDoc(getPublicDoc('games', gameId), {
+                    type: '4p', creatorId: state.user.uid, betAmount: amount, status: 'open_4p', createdAt: Date.now(), players: []
+                });
+                window.closeModal('create-4p-modal');
+                window.showToast("Mesa VIP creada", "success");
+            } catch (e) { window.showToast("Error Admin", "error"); }
+        };
+
+        window.handleBuySeat4P = async (gameId) => {
+            const game = state.games.find(g => g.id === gameId);
+            if (!game) return;
+            if (state.profile.balance < game.betAmount) return window.showToast("Saldo insuficiente para entrar a VIP.", "error");
+            if (game.players && game.players.includes(state.user.uid)) return window.showToast("Ya compraste puesto.", "error");
+
+            try {
+                await updateDoc(getPublicDoc('profiles', state.user.uid), { balance: state.profile.balance - game.betAmount });
+                const newPlayers = [...(game.players || []), state.user.uid];
+                let updateData = { players: newPlayers };
+                if (newPlayers.length === 4) {
+                    updateData.status = 'active_4p';
+                    updateData.startedAt = Date.now();
+                    window.showToast("¡Mesa VIP Llena! La partida arranca.", "success");
+                } else {
+                    window.showToast("Puesto comprado.", "success");
+                }
+                await updateDoc(getPublicDoc('games', gameId), updateData);
+                window.changeTab('my_games');
+            } catch (e) { window.showToast("Error al comprar", "error"); }
+        };
+
+        // SISTEMA ANTI-FRAUDE
+        window.handleReportWin = async (gameId) => {
+            try {
+                await updateDoc(getPublicDoc('games', gameId), { status: 'review', claimedWinnerId: state.user.uid, reviewRequestedAt: Date.now() });
+                window.showToast("Partida en revisión. Envía captura al Admin.", "success");
+                const msg = `Hola Admin, gané la partida ID: ${gameId.substring(gameId.length - 6)}. Aquí te envío la captura. Correo: ${state.user.email}`;
+                window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+            } catch (e) { window.showToast("Error al reportar", "error"); }
+        };
+
+        // ==========================================
+        // FUNCIONES DE ADMINISTRADOR
+        // ==========================================
+        window.handleAdminConfirmWin = async (gameId, winnerId) => {
+            if (!state.isAdmin) return;
+            const game = state.games.find(g => g.id === gameId);
+            if (!game) return;
+
+            const is4p = game.type === '4p';
+            const totalPot = is4p ? (game.betAmount * 4) : (game.betAmount * 2);
+            const adminCut = totalPot * 0.10; // 10% FEE
+            const winnings = totalPot - adminCut;
+
+            try {
+                const winnerProfile = state.users[winnerId] || { balance: 0, wins: 0, earnings: 0 };
+                await updateDoc(getPublicDoc('profiles', winnerId), {
+                    balance: (winnerProfile.balance || 0) + winnings, wins: (winnerProfile.wins || 0) + 1, earnings: (winnerProfile.earnings || 0) + winnings
+                });
+                await updateDoc(getPublicDoc('games', gameId), {
+                    status: 'completed', winnerId: winnerId, completedAt: Date.now(), pot: totalPot, winnings: winnings, adminFee: adminCut
+                });
+                window.showToast("Victoria Aprobada", "success");
+            } catch (e) { window.showToast("Error Admin", "error"); }
+        };
+
+        window.handleAdminRejectClaim = async (gameId) => {
+            if (!state.isAdmin) return;
+            const game = state.games.find(g => g.id === gameId);
+            try {
+                await updateDoc(getPublicDoc('games', gameId), { status: game.type === '4p' ? 'active_4p' : 'active', claimedWinnerId: null });
+                window.showToast("Disputa Rechazada (Devuelta a Juego)", "success");
+            } catch (e) { }
+        };
+
+        window.adminAddBalance = async (uid, inputId) => {
+            if (!state.isAdmin) return;
+            const amount = Number(document.getElementById(inputId).value);
+            if (!amount || amount === 0) return;
+            try {
+                const user = state.users[uid];
+                await updateDoc(getPublicDoc('profiles', uid), { balance: (user.balance || 0) + amount });
+                document.getElementById(inputId).value = '';
+                window.showToast(`Saldo actualizado: ${formatId(uid)}`, "success");
+            } catch (e) { window.showToast("Error al cargar", "error"); }
+        };
+
+        // ==========================================
+        // RENDERIZADO VISUAL
+        // ==========================================
+        window.changeTab = (tab) => {
+            state.activeTab = tab;
+            renderNav();
+            renderView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        function renderNav() {
+            const tabs = [
+                { id: 'lobby', icon: 'play-circle', label: 'Lobby', color: 'text-indigo-600' },
+                { id: 'my_games', icon: 'swords', label: 'Mis Partidas', color: 'text-indigo-600' },
+                { id: 'leaderboard', icon: 'trophy', label: 'Ranking', color: 'text-amber-500' }
+            ];
+            if (state.isAdmin) tabs.push({ id: 'admin', icon: 'shield-check', label: 'Admin', color: 'text-rose-600' });
+
+            document.getElementById('nav-buttons').innerHTML = tabs.map(t => `
+                <button onclick="window.changeTab('${t.id}')" class="flex flex-col items-center p-2 px-4 rounded-2xl transition-all ${state.activeTab === t.id ? t.color + ' bg-slate-50 shadow-sm transform -translate-y-1' : 'text-slate-400 hover:text-slate-600'}">
+                    <i data-lucide="${t.icon}" class="${state.activeTab === t.id ? 'w-7 h-7' : 'w-6 h-6'} transition-all"></i>
+                    <span class="text-[10px] font-black mt-1 tracking-wide">${t.label}</span>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderView() {
+            const main = document.getElementById('main-content');
+            let html = '';
+
+            if (state.activeTab === 'lobby') {
+                const openGames = state.games.filter(g => (g.status === 'open' && g.creatorId !== state.user?.uid) || (g.status === 'open_4p' && !(g.players || []).includes(state.user?.uid)));
+                html = `
+                    <div class="space-y-6 fade-in pb-10">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-2xl font-black flex items-center gap-2 text-slate-900 tracking-tight"><i data-lucide="play-circle" class="text-indigo-600 w-7 h-7"></i> Sala de Espera</h2>
+                            <div class="flex gap-2">
+                                ${state.isAdmin ? `<button onclick="window.openModal('create-4p-modal')" class="bg-slate-900 text-amber-400 p-2.5 rounded-2xl font-bold shadow-lg shadow-slate-900/20 active:scale-95 transition-all" title="Mesa 4P VIP"><i data-lucide="crown" class="w-5 h-5"></i></button>` : ''}
+                                <button onclick="window.openModal('create-modal')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95 transition-all"><i data-lucide="plus" class="w-4 h-4"></i> Crear Reto</button>
+                            </div>
+                        </div>
+                        ${openGames.length === 0 ? `
+                            <div class="bg-white border border-slate-200 rounded-3xl p-10 text-center text-slate-500 flex flex-col items-center gap-4 shadow-sm">
+                                <i data-lucide="clock" class="w-16 h-16 opacity-30 text-slate-400"></i>
+                                <div><p class="font-black text-slate-800 text-xl tracking-tight">Lobby Vacío</p><p class="text-sm mt-1 font-medium">¡Crea un reto y sé el primero!</p></div>
+                            </div>
+                        ` : `
+                            <div class="grid gap-5">
+                                ${openGames.map(game => {
+                    if (game.type === '4p') {
+                        const pCount = (game.players || []).length;
+                        return `
+                                        <div class="bg-slate-900 border-2 border-amber-500/30 shadow-xl shadow-amber-900/10 rounded-3xl p-5 flex flex-col sm:flex-row justify-between items-center gap-4 relative overflow-hidden group">
+                                            <div class="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><i data-lucide="crown" class="w-32 h-32 text-amber-500"></i></div>
+                                            <div class="relative z-10 w-full sm:w-auto text-center sm:text-left">
+                                                <p class="text-xs text-amber-500 font-black uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1"><i data-lucide="crown" class="w-3 h-3"></i> Mesa VIP (4P)</p>
+                                                <p class="text-4xl font-black text-white">${game.betAmount} LC <span class="text-sm text-slate-400 font-medium">/entrada</span></p>
+                                                <p class="text-xs text-slate-400 mt-1">Pozo en juego: <span class="text-amber-400 font-bold">${game.betAmount * 4} LC</span></p>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-4 z-10 w-full sm:w-auto bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
+                                                <div class="flex gap-2">
+                                                    ${[0, 1, 2, 3].map(i => `<div class="w-5 h-5 rounded-full ${i < pCount ? 'bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)]' : 'bg-slate-700'} border-2 border-slate-900 transition-colors duration-500"></div>`).join('')}
+                                                </div>
+                                                <button onclick="window.handleBuySeat4P('${game.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 px-8 py-3 rounded-xl font-black transition-all shadow-lg active:scale-95">Comprar Puesto</button>
+                                            </div>
+                                        </div>`;
+                    } else {
+                        return `
+                                        <div class="bg-white border border-slate-200 shadow-sm rounded-3xl p-5 flex justify-between items-center hover:border-indigo-300 hover:shadow-md transition-all">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center border border-indigo-100 shadow-inner">
+                                                    <i data-lucide="${formatAvatar(game.creatorId)}" class="w-7 h-7"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Creador</p>
+                                                    <p class="font-bold text-slate-900 text-lg">${formatId(game.creatorId)}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-right hidden sm:block">
+                                                    <p class="text-3xl font-black text-emerald-600 leading-none">${game.betAmount} LC</p>
+                                                    ${state.exchangeRate ? `<p class="text-[10px] text-slate-400 font-mono font-bold mt-1">≈ Bs. ${formatBs(game.betAmount)}</p>` : ''}
+                                                </div>
+                                                <button onclick="window.handleAcceptGame('${game.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black active:scale-95 transition-all shadow-md flex flex-col items-center leading-none">
+                                                    Aceptar
+                                                    <span class="sm:hidden text-[10px] font-mono mt-1 opacity-80">${game.betAmount} LC</span>
+                                                </button>
+                                            </div>
+                                        </div>`;
+                    }
+                }).join('')}
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else if (state.activeTab === 'my_games') {
+                const myGames = state.games.filter(g => g.creatorId === state.user?.uid || g.challengerId === state.user?.uid || (g.players || []).includes(state.user?.uid));
+                html = `
+                    <div class="space-y-6 fade-in pb-10">
+                        <h2 class="text-2xl font-black flex items-center gap-2 text-slate-900 tracking-tight"><i data-lucide="swords" class="text-indigo-600 w-7 h-7"></i> Mis Partidas</h2>
+                        ${myGames.length === 0 ? `<div class="bg-white border border-slate-200 rounded-3xl p-10 text-center text-slate-500 font-medium">Aún no tienes partidas activas.</div>` : `
+                            <div class="grid gap-5">
+                                ${myGames.map(game => {
+                    const is4p = game.type === '4p';
+                    const isActive = game.status === 'active' || game.status === 'active_4p';
+                    const isReview = game.status === 'review';
+                    const isCompleted = game.status === 'completed';
+
+                    const bgClass = isCompleted ? 'bg-slate-50 border-slate-200' : (is4p ? 'bg-slate-900 border-amber-500/30' : (isReview ? 'bg-amber-50 border-amber-300 shadow-md' : 'bg-white border-indigo-200 shadow-lg shadow-indigo-100'));
+
+                    let badge = `<span class="bg-slate-200 text-slate-600 text-[10px] px-2.5 py-1 rounded-md font-black uppercase">FINALIZADA</span>`;
+                    if (game.status === 'open' || game.status === 'open_4p') badge = `<span class="bg-amber-100 text-amber-700 text-[10px] px-2.5 py-1 rounded-md font-black uppercase">ESPERANDO</span>`;
+                    if (isActive) badge = `<span class="bg-indigo-100 text-indigo-700 text-[10px] px-2.5 py-1 rounded-md font-black uppercase animate-pulse">EN JUEGO</span>`;
+                    if (isReview) badge = `<span class="bg-rose-100 text-rose-700 text-[10px] px-2.5 py-1 rounded-md font-black uppercase animate-pulse border border-rose-200">REVISIÓN ADMIN</span>`;
+
+                    const shortId = game.id.substring(5, 15);
+
+                    let centerContent = '';
+                    if (is4p) {
+                        centerContent = `<div class="text-center w-full py-2"><p class="text-3xl font-black text-amber-400 mb-1 leading-none">Pozo: ${game.betAmount * 4} LC</p><p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Mesa VIP 4P</p></div>`;
+                    } else {
+                        const oppId = game.creatorId === state.user.uid ? game.challengerId : game.creatorId;
+                        centerContent = `
+                                            <div class="flex justify-between items-center w-full">
+                                                <div class="text-center flex-1"><i data-lucide="${formatAvatar(state.user.uid)}" class="mx-auto w-8 h-8 text-indigo-500 mb-1"></i><p class="text-[10px] text-slate-500 font-black uppercase">Tú</p><p class="font-bold text-slate-900 truncate">${formatId(state.user.uid)}</p></div>
+                                                <div class="px-3 text-center flex flex-col items-center"><div class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-black mb-1 border border-emerald-200">Pozo: ${game.betAmount * 2} LC</div></div>
+                                                <div class="text-center flex-1"><i data-lucide="${oppId ? formatAvatar(oppId) : 'user'}" class="mx-auto w-8 h-8 text-rose-400 mb-1"></i><p class="text-[10px] text-slate-500 font-black uppercase">Rival</p><p class="font-bold text-slate-900 truncate">${oppId ? formatId(oppId) : '?'}</p></div>
+                                            </div>`;
+                    }
+
+                    let resultHTML = '';
+                    if (isActive) {
+                        resultHTML = `<div class="mt-5 pt-5 border-t ${is4p ? 'border-slate-800' : 'border-slate-100'}"><button onclick="window.handleReportWin('${game.id}')" class="w-full ${is4p ? 'bg-amber-500 text-slate-900' : 'bg-indigo-600 text-white'} py-4 rounded-2xl font-black flex justify-center items-center gap-2 active:scale-95 transition-all shadow-md"><i data-lucide="trophy" class="w-5 h-5"></i> ¡REPORTAR VICTORIA!</button></div>`;
+                    } else if (isReview) {
+                        resultHTML = `<div class="mt-5 pt-4 border-t border-amber-200/50 text-center bg-white/50 rounded-xl p-3"><p class="text-sm font-black text-amber-800 mb-1 flex items-center justify-center gap-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> En revisión por Admin</p><p class="text-xs text-amber-700 font-medium">Recuerda enviar la captura por WhatsApp.</p></div>`;
+                    } else if (isCompleted) {
+                        resultHTML = game.winnerId === state.user.uid ?
+                            `<div class="mt-4 pt-4 border-t border-slate-200"><div class="bg-emerald-50 text-emerald-700 py-3 rounded-xl border border-emerald-200 font-black text-center flex justify-center items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> ¡Ganaste +${game.winnings} LC!</div></div>` :
+                            `<div class="mt-4 pt-4 border-t border-slate-200"><div class="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-center">Perdiste ${game.betAmount} LC</div></div>`;
+                    }
+
+                    return `
+                                        <div class="border-2 rounded-3xl p-5 transition-all ${bgClass}">
+                                            <div class="flex justify-between items-center mb-4 border-b ${is4p ? 'border-slate-800' : 'border-slate-100'} pb-3">
+                                                ${badge} 
+                                                <button onclick="window.copyToClipboard('${shortId}')" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-colors active:scale-95" title="Copiar ID de Partida">
+                                                    ID: ${shortId} <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                                </button>
+                                            </div>
+                                            <div class="flex">${centerContent}</div>
+                                            ${resultHTML}
+                                        </div>`;
+                }).join('')}
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else if (state.activeTab === 'leaderboard') {
+                const leaderboard = Object.values(state.users).sort((a, b) => (b.wins || 0) - (a.wins || 0)).slice(0, 10);
+                html = `
+                    <div class="space-y-6 fade-in pb-10">
+                        <h2 class="text-2xl font-black flex items-center gap-2 text-slate-900 tracking-tight"><i data-lucide="trophy" class="text-amber-500 w-7 h-7"></i> Top 10 Jugadores</h2>
+                        <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                            ${leaderboard.map((u, index) => `
+                                <div class="flex items-center justify-between p-4 border-b border-slate-100 ${u.id === state.user.uid ? 'bg-indigo-50/70' : 'hover:bg-slate-50 transition-colors'}">
+                                    <div class="flex items-center gap-4">
+                                        <span class="text-xl font-black w-6 text-center ${index === 0 ? 'text-amber-500 text-2xl drop-shadow-sm' : index === 1 ? 'text-slate-400 text-xl' : index === 2 ? 'text-amber-700 text-lg' : 'text-slate-300'}">${index + 1}</span>
+                                        <div class="w-12 h-12 bg-slate-100 text-slate-500 rounded-2xl flex justify-center items-center border border-slate-200 shadow-inner">
+                                            <i data-lucide="${formatAvatar(u.id)}" class="w-6 h-6"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-900 text-base">${formatId(u.id)} ${u.id === state.user.uid ? '<span class="text-[9px] bg-indigo-600 text-white px-2 py-0.5 rounded-md font-black ml-1 align-middle">TÚ</span>' : ''}</p>
+                                            <p class="text-xs text-slate-500 font-medium">${u.wins || 0} Victorias</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-base font-black text-emerald-600">${(u.earnings || 0).toFixed(1)} LC</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (state.activeTab === 'admin' && state.isAdmin) {
+                const allUsers = Object.values(state.users).sort((a, b) => b.joinedAt - a.joinedAt);
+                const reviewGames = state.games.filter(g => g.status === 'review');
+
+                html = `
+                    <div class="space-y-6 fade-in pb-10">
+                        <h2 class="text-2xl font-black flex items-center gap-2 text-rose-600 tracking-tight"><i data-lucide="shield-alert" class="w-7 h-7"></i> Panel Admin</h2>
+                        
+                        ${reviewGames.length > 0 ? `
+                        <div class="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 shadow-sm mb-8">
+                            <h3 class="font-black text-rose-800 mb-4 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 animate-pulse"></i> Disputas Pendientes</h3>
+                            <div class="grid gap-4">
+                                ${reviewGames.map(g => `
+                                    <div class="bg-white rounded-2xl p-4 border border-rose-200 flex flex-col gap-3 shadow-sm">
+                                        <div class="flex justify-between items-center text-sm font-bold text-slate-800 bg-rose-50 p-2 rounded-xl">
+                                            <span class="font-mono text-slate-500 text-xs">ID: ${g.id.substring(5, 15)}</span>
+                                            <span class="text-rose-600">Reclama: ${formatId(g.claimedWinnerId)}</span>
+                                        </div>
+                                        <div class="flex gap-2 mt-1">
+                                            <button onclick="window.handleAdminConfirmWin('${g.id}', '${g.claimedWinnerId}')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-black text-xs active:scale-95 transition-all shadow-md">Aprobar Victoria</button>
+                                            <button onclick="window.handleAdminRejectClaim('${g.id}')" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-black text-xs active:scale-95 transition-all">Rechazar Falso</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>` : ''}
+
+                        <h3 class="font-black text-slate-900 mb-3 mt-6 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-indigo-500"></i> Gestión de Clientes</h3>
+                        <div class="grid gap-3">
+                            ${allUsers.map(u => `
+                                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                                    <div class="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                                        <div class="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex shrink-0 items-center justify-center border border-slate-200"><i data-lucide="${formatAvatar(u.id)}" class="w-5 h-5"></i></div>
+                                        <div class="overflow-hidden">
+                                            <p class="font-bold text-slate-900 text-sm truncate">${formatId(u.id)} <span class="text-[10px] font-medium text-slate-400 bg-slate-100 px-1 rounded ml-1">${u.email}</span></p>
+                                            <p class="text-xs text-slate-500 font-medium">Saldo: <strong class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">${(u.balance || 0).toFixed(1)} LC</strong></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 w-full sm:w-auto bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                        <input type="number" id="add-bal-${u.id}" placeholder="+/- LC" class="w-20 bg-white border border-slate-200 rounded-lg py-2 px-2 text-sm text-center font-bold focus:outline-none focus:border-indigo-500">
+                                        <button onclick="window.adminAddBalance('${u.id}', 'add-bal-${u.id}')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-black active:scale-95 whitespace-nowrap shadow-md">Cargar</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            main.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // INICIO
+        // ==========================================
+        fetchExchangeRate();
+
+    </script>
+</body>
+
+</html>
